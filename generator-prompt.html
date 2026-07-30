@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator Ide Prompt — Muhammad Fajar Nurkholiq</title>
+<meta name="description" content="Generator ide prompt AI berbasis logic JavaScript sederhana — bukan AI beneran, murni kode sendiri.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #17120F;
+    --bg-card: #241B16;
+    --text: #F1E9DC;
+    --text-muted: #B7A695;
+    --accent: #AE3E33;
+    --accent-warm: #CBA872;
+    --border: rgba(241,233,220,0.09);
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .mono{ font-family: 'IBM Plex Mono', monospace; }
+
+  .engrave-bg{
+    position: fixed; inset: 0; z-index: 0;
+    opacity: 0.06; pointer-events: none;
+  }
+
+  main{
+    position: relative; z-index: 1;
+    max-width: 640px; margin: 0 auto;
+    padding: 4rem 1.5rem 3rem;
+  }
+
+  .eyebrow{
+    color: var(--accent-warm);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.85rem;
+  }
+
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    line-height: 1.25;
+    margin-bottom: 1rem;
+  }
+
+  .desc{
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 54ch;
+    margin-bottom: 2.25rem;
+  }
+
+  .note{
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--accent-warm);
+  }
+
+  .label{
+    color: var(--accent-warm);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.9rem;
+    display: block;
+  }
+
+  .categories{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+  }
+
+  .cat-btn{
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .cat-btn.active{
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(174,62,51,0.12);
+  }
+  .cat-btn:hover{ border-color: var(--accent-warm); }
+
+  .user-input{
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 0.6rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .user-input:focus{ border-color: var(--accent); }
+  .user-input::placeholder{ color: var(--text-muted); }
+
+  .input-hint{
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .generate-btn{
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    color: var(--text);
+    padding: 1rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    margin-bottom: 1.75rem;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .generate-btn:hover{ background: #96352c; }
+  .generate-btn:active{ transform: scale(0.98); }
+
+  .output-card{
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .output-text{
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+  .output-placeholder{ color: var(--text-muted); }
+
+  .spec-line{
+    padding: 0.35rem 0;
+    font-size: 1rem;
+  }
+  .spec-line:not(:last-child){
+    border-bottom: 1px solid var(--border);
+  }
+  .spec-label{
+    color: var(--accent-warm);
+    font-size: 0.85rem;
+  }
+
+  .copy-btn{
+    align-self: flex-start;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--accent-warm);
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+  .copy-btn:hover{ border-color: var(--accent-warm); }
+
+  .history{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .history-item{
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.7rem 0.9rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  footer{
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  footer a{ color: var(--accent-warm); }
+</style>
+</head>
+<body>
+
+<svg class="engrave-bg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="engrave" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="8" cy="8" r="6.5" fill="none" stroke="#F1E9DC" stroke-width="0.35"/>
+      <circle cx="8" cy="8" r="3.8" fill="none" stroke="#F1E9DC" stroke-width="0.25"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#engrave)"/>
+</svg>
+
+<main>
+  <p class="eyebrow mono">&gt; log eksperimen</p>
+  <h1>Generator Ide Prompt</h1>
+  <p class="desc">
+    Kehabisan ide mau nulis prompt apa buat AI? Pilih kategori, klik generate.
+    <span class="note mono">Bukan AI — ini logic JavaScript murni, kode sendiri.</span>
+  </p>
+
+  <span class="label mono">kategori</span>
+  <div class="categories" id="categories"></div>
+
+  <span class="label mono">ide spesifik (opsional)</span>
+  <input
+    type="text"
+    id="userInput"
+    class="user-input"
+    placeholder="Misal: ganti wajah Ronaldo jadi wajah saya"
+  >
+  <p class="input-hint mono">Kosongin kalau mau full random. Isi kalau udah ada ide, nanti bagian lain (gaya/tone/target) tetep dilengkapi otomatis.</p>
+
+  <button class="generate-btn" id="generateBtn">Generate Ide</button>
+
+  <div class="output-card">
+    <div class="output-text output-placeholder" id="outputText">Hasilnya bakal muncul di sini. Klik generate dulu.</div>
+    <button class="copy-btn mono" id="copyBtn" style="display:none;">salin teks</button>
+  </div>
+
+  <span class="label mono">riwayat</span>
+  <div class="history" id="history"></div>
+
+  <footer class="mono">
+    Bagian dari portofolio Muhammad Fajar Nurkholiq.
+    <a href="https://mfajarnurkholiq7-cmyk.github.io/portofolio-saya/">Lihat portofolio utama →</a>
+  </footer>
+</main>
+
+<script>
+  // ============================================================
+  // BANK KATA — semua isi generator ada di sini, tiap kategori
+  // punya beberapa "slot" yang nanti digabung jadi satu kalimat.
+  // ============================================================
+  const bank = {
+    visual: {
+      label: "Visual / Gambar",
+      primary: "subjek",
+      order: ["subjek", "gaya", "detail"],
+      specLabels: { subjek: "Ide", gaya: "Gaya", detail: "Detail" },
+      subjek: ["kucing astronot di bulan", "kota melayang di atas awan", "robot penjual kopi keliling", "hutan dengan pohon neon", "kapal terbang gaya steampunk", "kucing samurai di kuil tua", "kafe kecil di luar angkasa", "perpustakaan di dasar laut", "naga dari lipatan kertas origami", "pasar malam bergaya cyberpunk", "rumah pohon di tengah badai petir", "pasar ikan di planet asing"],
+      gaya: ["cat air", "pixel art", "foto realistis", "anime era 90-an", "poster vintage", "line art minimalis", "lukisan minyak klasik", "render 3D", "sketsa pensil", "kolase kertas"],
+      detail: ["pencahayaan senja keemasan", "suasana misterius berkabut", "warna pastel lembut", "kontras dramatis hitam-putih", "detail super rumit", "komposisi simetris rapi", "efek hujan ringan", "bayangan panjang sore hari"],
+      templates: [
+        (s) => `Buat gambar ${s.subjek}, gaya ${s.gaya}, dengan ${s.detail}.`,
+        (s) => `Visualisasikan ${s.subjek} dalam gaya ${s.gaya}, fokus ke ${s.detail}.`,
+        (s) => `Ide gambar: ${s.subjek} — gaya ${s.gaya}, ${s.detail}.`
+      ]
+    },
+    tulisan: {
+      label: "Tulisan / Copywriting",
+      primary: "topik",
+      order: ["topik", "format", "tone"],
+      specLabels: { topik: "Topik", format: "Format", tone: "Tone" },
+      format: ["caption Instagram", "headline iklan", "paragraf pembuka blog", "thread pembuka di X/Twitter", "deskripsi produk", "bio singkat profil", "email pemasaran"],
+      topik: ["produktivitas kerja", "healing & self-care", "tips hemat bulanan", "rutinitas kopi pagi", "motivasi mulai usaha", "kebiasaan journaling", "belajar hal baru di usia dewasa"],
+      tone: ["santai & lucu", "formal & meyakinkan", "puitis & reflektif", "provokatif & berani", "storytelling personal", "hangat seperti curhat ke teman"],
+      templates: [
+        (s) => `Tulis ${s.format} tentang ${s.topik}, dengan tone ${s.tone}.`,
+        (s) => `Bikin ${s.format} bertema ${s.topik}, gaya penulisan ${s.tone}.`,
+        (s) => `Ide tulisan: ${s.format} soal ${s.topik} — tone-nya ${s.tone}.`
+      ]
+    },
+    coding: {
+      label: "Coding / Teknis",
+      primary: "subjek",
+      order: ["subjek", "tugas", "syarat"],
+      specLabels: { subjek: "Untuk", tugas: "Tugas", syarat: "Syarat" },
+      tugas: ["Buatkan fungsi", "Refactor kode", "Buatkan unit test untuk", "Jelaskan cara kerja", "Optimasi performa dari", "Sederhanakan logic"],
+      subjek: ["to-do list app", "kalkulator sederhana", "pengambil data cuaca dari API", "game tebak angka", "sistem login dasar", "pengambil data dari halaman web", "form validasi input"],
+      syarat: ["pakai vanilla JavaScript tanpa library", "harus responsive di HP", "dijelasin baris per baris", "eksekusinya harus cepat", "kodenya harus gampang dibaca pemula", "tanpa dependency eksternal"],
+      templates: [
+        (s) => `${s.tugas} ${s.subjek}, dengan syarat ${s.syarat}.`,
+        (s) => `Tolong ${String(s.tugas).charAt(0).toLowerCase()}${String(s.tugas).slice(1)} untuk ${s.subjek}, syaratnya ${s.syarat}.`,
+        (s) => `Task: ${s.tugas} ${s.subjek} — syarat: ${s.syarat}.`
+      ]
+    },
+    bisnis: {
+      label: "Ide Bisnis / Produk",
+      primary: "subjek",
+      order: ["subjek", "target", "twist"],
+      specLabels: { subjek: "Ide Produk", target: "Target", twist: "Twist Fitur" },
+      subjek: ["aplikasi belajar bahasa asing", "platform jual-beli barang bekas antar tetangga", "tools pencatat keuangan harian", "marketplace jasa lokal (tukang, servis)", "aplikasi pengingat minum air", "platform belajar coding untuk pemula"],
+      target: ["anak muda urban", "ibu rumah tangga", "mahasiswa", "freelancer", "pekerja kantoran sibuk", "pelajar SMA"],
+      twist: ["dengan sistem gamifikasi biar nagih", "berbasis komunitas lokal", "model langganan murah per bulan", "dengan fitur berbagi progress ke teman", "tanpa iklan sama sekali", "fokus ke satu fitur doang, simpel"],
+      templates: [
+        (s) => `Ide produk: ${s.subjek} untuk ${s.target}, ${s.twist}.`,
+        (s) => `Bayangin ${s.subjek} yang ditargetin ke ${s.target}, ${s.twist}.`,
+        (s) => `Konsep bisnis: ${s.subjek} (target: ${s.target}) — ${s.twist}.`
+      ]
+    }
+  };
+
+  const categoryKeys = Object.keys(bank);
+  let activeCategory = "visual";
+  let history = [];
+
+  // render tombol kategori
+  const catContainer = document.getElementById('categories');
+  categoryKeys.forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (key === activeCategory ? ' active' : '');
+    btn.textContent = bank[key].label;
+    btn.dataset.key = key;
+    btn.addEventListener('click', () => {
+      activeCategory = key;
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    catContainer.appendChild(btn);
+  });
+
+  const extraBtn = document.createElement('button');
+  extraBtn.className = 'cat-btn';
+  extraBtn.textContent = 'Kejutan Aku';
+  extraBtn.dataset.key = 'random';
+  extraBtn.addEventListener('click', () => {
+    activeCategory = 'random';
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    extraBtn.classList.add('active');
+  });
+  catContainer.appendChild(extraBtn);
+
+  // ambil satu item random dari array
+  function pickRandom(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // Isi tiap slot: kalau ada userInput, slot 'primary' dipaksa pakai itu,
+  // slot lainnya tetap random dari bank.
+  function fillSlots(cat, userInput){
+    const slots = {};
+    cat.order.forEach(field => {
+      if (userInput && field === cat.primary){
+        slots[field] = userInput;
+      } else {
+        slots[field] = pickRandom(cat[field]);
+      }
+    });
+    return slots;
+  }
+
+  // Mode 1: tanpa input user -> pilih salah satu variasi kalimat (random),
+  // biar nggak monoton kalimatnya selalu sama.
+  function generateSentence(key){
+    const cat = bank[key];
+    const slots = fillSlots(cat, null);
+    const template = pickRandom(cat.templates);
+    return { type: 'sentence', text: template(slots) };
+  }
+
+  // Mode 2: ada input user -> jangan dipaksa masuk kalimat baku (itu yang
+  // bikin kaku). Tampilin sebagai daftar spesifikasi, lebih deket ke cara
+  // orang beneran nulis prompt AI.
+  function generateSpec(key, userInput){
+    const cat = bank[key];
+    const slots = fillSlots(cat, userInput);
+    const pairs = cat.order.map(field => ({
+      label: cat.specLabels[field],
+      value: slots[field]
+    }));
+    return { type: 'spec', pairs };
+  }
+
+  function generate(){
+    const key = activeCategory === 'random' ? pickRandom(categoryKeys) : activeCategory;
+    const userInput = document.getElementById('userInput').value.trim();
+    const result = userInput ? generateSpec(key, userInput) : generateSentence(key);
+
+    renderOutput(result);
+
+    const plainText = result.type === 'spec'
+      ? result.pairs.map(p => `${p.label}: ${p.value}`).join('\n')
+      : result.text;
+
+    history.unshift(plainText);
+    if (history.length > 5) history.pop();
+    renderHistory();
+  }
+
+  // Bangun tampilan output pakai DOM element (bukan innerHTML string),
+  // biar input dari user (yang bisa aja ketik apa aja) nggak dirender
+  // sebagai HTML mentah — aman dari XSS.
+  function renderOutput(result){
+    const outputEl = document.getElementById('outputText');
+    outputEl.innerHTML = '';
+    outputEl.classList.remove('output-placeholder');
+
+    if (result.type === 'sentence'){
+      outputEl.textContent = result.text;
+    } else {
+      result.pairs.forEach(p => {
+        const line = document.createElement('div');
+        line.className = 'spec-line';
+        const label = document.createElement('span');
+        label.className = 'spec-label mono';
+        label.textContent = p.label + ': ';
+        line.appendChild(label);
+        line.appendChild(document.createTextNode(p.value));
+        outputEl.appendChild(line);
+      });
+    }
+
+    document.getElementById('copyBtn').style.display = 'inline-block';
+  }
+
+  function renderHistory(){
+    const el = document.getElementById('history');
+    el.innerHTML = '';
+    history.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.textContent = item;
+      el.appendChild(div);
+    });
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', generate);
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const outputEl = document.getElementById('outputText');
+    const specLines = outputEl.querySelectorAll('.spec-line');
+    let text;
+    if (specLines.length > 0){
+      text = Array.from(specLines).map(el => el.textContent).join('\n');
+    } else {
+      text = outputEl.textContent;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      const original = btn.textContent;
+      btn.textContent = 'tersalin!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    });
+  });
+</script>
+
+</body>
+</html>
