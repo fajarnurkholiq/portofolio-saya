@@ -176,28 +176,6 @@
   </div>
 </div>
 
-<!-- Modal: login -->
-<div class="modal-overlay" id="loginModal">
-  <div class="modal">
-    <div class="modal-body">
-      <p class="modal-title">Masuk</p>
-      <p class="form-error" id="loginError"></p>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="loginEmail">
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="loginPassword">
-      </div>
-      <div class="modal-actions">
-        <button class="modal-btn primary" id="loginSubmitBtn">Masuk</button>
-        <button class="modal-btn" id="closeLoginBtn">Batal</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Modal: tambah/edit entri -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
@@ -231,7 +209,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js';
   import {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+    getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
   } from 'https://www.gstatic.com/firebasejs/12.17.0/firebase-auth.js';
   import {
     getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
@@ -256,6 +234,10 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  // Cuma akun dengan email ini yang dianggap admin.
+  const OWNER_EMAIL = 'muhammadfajarn619@gmail.com';
 
   let allItems = [];
   let activeCategory = 'semua';
@@ -273,6 +255,12 @@
 
   // ---------- Auth state ----------
   onAuthStateChanged(auth, (user) => {
+    if (user && user.email !== OWNER_EMAIL){
+      // Bukan akun admin — tolak, sign out otomatis.
+      signOut(auth);
+      alert('Akun Google ini bukan akun admin.');
+      return;
+    }
     isAdmin = !!user;
     document.getElementById('authLink').textContent = isAdmin ? 'Keluar' : 'Masuk';
     document.getElementById('fabAdd').classList.toggle('visible', isAdmin);
@@ -283,30 +271,10 @@
     if (isAdmin) {
       signOut(auth);
     } else {
-      document.getElementById('loginModal').classList.add('open');
-    }
-  });
-
-  document.getElementById('closeLoginBtn').addEventListener('click', () => {
-    document.getElementById('loginModal').classList.remove('open');
-  });
-
-  document.getElementById('loginSubmitBtn').addEventListener('click', () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errEl = document.getElementById('loginError');
-    errEl.style.display = 'none';
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        document.getElementById('loginModal').classList.remove('open');
-        document.getElementById('loginEmail').value = '';
-        document.getElementById('loginPassword').value = '';
-      })
-      .catch((err) => {
-        errEl.textContent = 'Login gagal: email/password salah.';
-        errEl.style.display = 'block';
+      signInWithPopup(auth, googleProvider).catch((err) => {
+        alert('Login gagal: ' + err.message);
       });
+    }
   });
 
   // ---------- Render filter kategori ----------
